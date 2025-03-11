@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotifyRus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        :root {
+            --primary: #1DB954;
+            --primary-hover: #1ed760;
+            --dark: #121212;
+            --darker: #000000;
+            --lighter: #282828;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(29, 185, 84, 0.1), transparent 50%),
+                        radial-gradient(circle at bottom left, rgba(29, 185, 84, 0.1), transparent 50%);
+            z-index: -1;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 60px;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(29, 185, 84, 0.2), transparent);
+            animation: gradientShift 8s infinite alternate;
+        }
+
+       
+        .hero h1 {
+            font-size: 4.5rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s ease;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease 0.2s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, var(--primary), var(--primary-hover));
+            color: white;
+            padding: 1.2rem 3rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: fadeInUp 1s ease 0.4s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+
+        .cta-button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover::after {
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .slideshow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8));
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes gradientShift {
+            from {
+                transform: translateX(-50%);
+            }
+            to {
+                transform: translateX(50%);
+            }
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            background-color: var(--primary);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    
+    <div class="gradient-bg"></div>
+
+    <style>
+        /* Header and Navigation Bar Styles */
+        header {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 1.2rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+    
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+    
+        .logo {
+            width: 45px;
+            height: auto;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 8px rgba(29, 185, 84, 0.3));
+        }
+    
+        .logo:hover {
+            transform: scale(1.08) rotate(5deg);
+            filter: drop-shadow(0 0 12px rgba(29, 185, 84, 0.5));
+        }
+    
+        nav {
+            position: relative;
+        }
+    
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 2.5rem;
+            margin: 0;
+            padding: 0;
+        }
+    
+        .nav-links li {
+            position: relative;
+        }
+    
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            letter-spacing: 0.3px;
+        }
+    
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1DB954, #1ed760);
+            border-radius: 8px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+    
+        .nav-links a:hover::before {
+            opacity: 0.1;
+            transform: scale(1.05);
+        }
+    
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #1DB954, #1ed760);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+            box-shadow: 0 0 8px rgba(29, 185, 84, 0.5);
+        }
+    
+        .nav-links a:hover::after {
+            width: 80%;
+        }
+    
+        /* Mobile Navigation Styles */
+        .menu-icon {
+            display: none;
+            font-size: 1.8rem;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            z-index: 1001;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #1DB954, #1ed760);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    
+        .menu-icon:hover {
+            transform: translateY(-50%) scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(29, 185, 84, 0.5));
+        }
+    
+        /* Tablet and Mobile Styles */
+        @media (max-width: 768px) {
+            nav {
+                width: 100%;
+            }
+    
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 75%;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.97);
+                padding: 90px 2rem 2rem;
+                backdrop-filter: blur(15px);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                align-items: center;
+                justify-content: flex-start;
+                border-left: 1px solid rgba(255, 255, 255, 0.08);
+            }
+    
+            .nav-links.active {
+                display: flex;
+                right: 0;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            }
+    
+            .menu-icon {
+                display: block;
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+            }
+    
+            .nav-links li {
+                width: 100%;
+                text-align: center;
+                margin: 1rem 0;
+                opacity: 0;
+                transform: translateX(20px);
+                transition: all 0.3s ease;
+            }
+    
+            .nav-links.active li {
+                opacity: 1;
+                transform: translateX(0);
+                transition-delay: 0.2s;
+            }
+    
+            .nav-links a {
+                display: block;
+                padding: 1rem;
+                width: 100%;
+                font-size: 1.1rem;
+                color: #fff;
+                background: linear-gradient(135deg, rgba(29, 185, 84, 0.1), rgba(30, 215, 96, 0.1));
+                border: 1px solid rgba(29, 185, 84, 0.2);
+                border-radius: 12px;
+                backdrop-filter: blur(5px);
+            }
+    
+            .nav-links a:hover {
+                background: linear-gradient(135deg, rgba(29, 185, 84, 0.2), rgba(30, 215, 96, 0.2));
+                border-color: rgba(29, 185, 84, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(29, 185, 84, 0.2);
+            }
+    
+            /* Overlay for mobile menu */
+            .nav-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 999;
+                backdrop-filter: blur(5px);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+    
+            .nav-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+        }
+    
+        /* Additional tablet-specific adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .nav-links {
+                gap: 1.5rem;
+            }
+    
+            .nav-links a {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+    
+    <!-- Header and Navigation Bar -->
+    <header>
+        <div class="header-container">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <img src="img/logo.png" alt="Logo" class="logo">
+            </div>
+    
+            <!-- Navigation Bar -->
+            <nav>
+                <div class="menu-icon">&#9776;</div>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="features.html">Features</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Overlay for mobile menu -->
+    <div class="nav-overlay"></div>
+    
+    <script>
+        // Mobile Navigation Toggle with animations
+        const menuIcon = document.querySelector('.menu-icon');
+        const navLinks = document.querySelector('.nav-links');
+        const navOverlay = document.querySelector('.nav-overlay');
+        const navItems = document.querySelectorAll('.nav-links li');
+    
+        menuIcon.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            navOverlay.classList.toggle('active');
+            document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+            
+            // Animate nav items
+            if (navLinks.classList.contains('active')) {
+                navItems.forEach((item, index) => {
+                    item.style.transitionDelay = `${0.1 * index}s`;
+                });
+            }
+        });
+    
+        // Close mobile menu when overlay is clicked
+        navOverlay.addEventListener('click', () => {
+            navLinks.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    
+        // Close mobile menu when a link is clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                navOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    
+        // Close mobile menu when screen size changes to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                navLinks.classList.remove('active');
+                navOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+    <section class="hero">
+        <div class="slideshow">
+            <div class="slide active" style="background-image: url('img/background1.webp')"></div>
+            <div class="slide" style="background-image: url('img/background2.webp')"></div>
+            <div class="slide" style="background-image: url('img/background3.webp')"></div>
+            <div class="slide" style="background-image: url('img/background4.webp')"></div>
+        </div>
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+        <div class="hero-content">
+            <h1>Your Music Journey Begins Here</h1>
+            <p>Immerse yourself in a world of unlimited music. Stream your favorite tracks with pristine quality, create your perfect playlists, and discover new artists.</p>
+            <a href="pricing.html"><button class="cta-button">Start Now</button></a>
+        </div>
+    </section>
+
+
+
+
+   <!-- Features Section with Particles Background -->
+<section class="features">
+    <div id="particles-features"></div>
+    <div class="feature-card">
+        <h3>Premium Sound</h3>
+        <p>Experience music in its purest form with our high-fidelity streaming quality. Every note, every beat, exactly as the artist intended.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Unlimited Listening Without VPN</h3>
+        <p>Take your music anywhere. Listen to unlimited tracks without interruptions or data usage.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Smart Recommendations</h3>
+        <p>Discover new music tailored to your taste. Our algorithm learns your preferences and suggests tracks you'll love.</p>
+    </div>
+</section>
+
+<!-- Styles for the Features Section -->
+<style>
+    :root {
+        --primary: #2EE59D;
+        --primary-hover: #25C489;
+        --dark: #1a1a1a;
+        --darker: #0d0d0d;
+        --lighter: rgba(255, 255, 255, 0.1);
+    }
+
+    .features {
+        padding: 6rem 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        position: relative;
+        overflow: hidden;
+        background: var(--darker);
+    }
+
+    #particles-features {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        opacity: 0.4;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 100%, var(--darker), var(--dark));
+    }
+
+    .feature-card {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2.5rem;
+        border-radius: 16px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 1;
+        transform: translateY(0);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, transparent, rgba(46, 229, 157, 0.1), transparent);
+        transform: translateY(100%);
+        transition: transform 0.6s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 8px 40px rgba(46, 229, 157, 0.15);
+    }
+
+    .feature-card:hover::before {
+        transform: translateY(0);
+    }
+
+    .feature-card h3 {
+        color: var(--primary);
+        margin: 1rem 0;
+        font-size: 1.5rem;
+        position: relative;
+        text-shadow: 0 2px 8px rgba(46, 229, 157, 0.3);
+    }
+
+    .feature-card p {
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.9);
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .features {
+            grid-template-columns: 1fr;
+            padding: 4rem 1rem;
+        }
+
+        .feature-card {
+            padding: 2rem;
+        }
+
+        #particles-features {
+            opacity: 0.3;
+        }
+    }
+</style>
+
+<!-- Particles.js Script -->
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    // Initialize Particles.js for the Features Section
+    particlesJS('particles-features', {
+        particles: {
+            number: { value: 60, density: { enable: true, value_area: 800 } },
+            color: { value: "#1DB954" },
+            shape: { type: "circle" },
+            opacity: { value: 0.5 },
+            size: { value: 2.5 },
+            line_linked: {
+                enable: true,
+                distance: 120,
+                color: "#2EE59D",
+                opacity: 0.3,
+                width: 1
+            },
+            move: {
+                enable: true,
+                speed: 4,
+                direction: "none",
+                random: false,
+                straight: false,
+                out_mode: "out",
+                bounce: false
+            }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: { enable: true, mode: "repulse" },
+                resize: true
+            },
+            modes: {
+                repulse: { distance: 100, duration: 0.4 },
+                push: { particles_nb: 3 }
+            }
+        },
+        retina_detect: true
+    });
+</script>
+
+
+
+
+
+
+    <script>
+        // Slideshow functionality
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        function nextSlide() {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        setInterval(nextSlide, 5000);
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^=""]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Create floating shapes
+        const shapes = document.querySelectorAll('.shape');
+        shapes.forEach((shape, index) => {
+            const size = Math.random() * 100 + 50;
+            shape.style.width = `${size}px`;
+            shape.style.height = `${size}px`;
+            shape.style.left = `${Math.random() * 100}%`;
+            shape.style.top = `${Math.random() * 100}%`;
+            shape.style.setProperty('--tx', `${Math.random() * 400 - 200}px`);
+            shape.style.setProperty('--ty', `${Math.random() * 400 - 200}px`);
+            shape.style.animationDelay = `${index * -5}s`;
+        });
+    </script>
+
+
+
+    <style>
+        :root {
+            --primary: #2ee59d;
+            --secondary: #ff6b6b;
+            --dark: #151515;
+            --darker: #0a0a0a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --gradient-1: linear-gradient(135deg, #2ee59d 0%, #00c4cc 100%);
+            --gradient-2: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+    
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--darker);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+    
+        .trending-section {
+            padding: 8rem 3rem;
+            background: linear-gradient(to bottom, var(--darker), var(--dark));
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+    
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    
+        .section-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            text-align: center;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: float 4s ease-in-out infinite;
+            letter-spacing: -1px;
+            position: relative;
+            overflow: hidden;
+        }
+    
+        .section-title::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: shimmer 3s infinite;
+        }
+    
+        @keyframes shimmer {
+            100% {
+                left: 200%;
+            }
+        }
+    
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    
+        .releases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+    
+        .album-card {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            aspect-ratio: 1;
+            opacity: 0;
+            animation: cardAppear 0.6s ease forwards;
+            background: rgba(255, 255, 255, 0.05);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+    
+        @keyframes cardAppear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    
+        .album-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+            mix-blend-mode: overlay;
+        }
+    
+        .album-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--card-shadow);
+        }
+    
+        .album-card:hover::before {
+            opacity: 0.3;
+        }
+    
+        .album-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.5s ease;
+        }
+    
+        .album-card:hover .album-cover {
+            transform: scale(1.1) rotateX(2deg) rotateY(2deg);
+        }
+    
+        .album-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            transform: translateY(30%);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+    
+        .album-card:hover .album-info {
+            transform: translateY(0);
+            background: linear-gradient(transparent, rgba(0,0,0,0.95));
+        }
+    
+        .album-title {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.1s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+    
+        .album-artist {
+            color: var(--primary);
+            font-size: 1.1rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.2s;
+        }
+    
+        .album-card:hover .album-title,
+        .album-card:hover .album-artist {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+        .charts-section {
+            padding: 8rem 3rem;
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+        }
+    
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+    
+        .chart-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            animation: slideUp 0.6s ease forwards;
+            position: relative;
+        }
+    
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: var(--gradient-1);
+            border-radius: 24px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    
+        .chart-card:hover::before {
+            opacity: 1;
+        }
+    
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    
+    
+            <style>
+                :root {
+                    --primary: #2ee59d;
+                    --secondary: #ff6b6b;
+                    --dark: #0a0a0a;
+                    --darker: #050505;
+                    --text-primary: #ffffff;
+                    --text-secondary: #b3b3b3;
+                    --gradient-1: linear-gradient(135deg, #2ee59d 0%, #00c4cc 100%);
+                    --gradient-2: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+                    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+                    --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
+        
+                body {
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                    color: var(--text-primary);
+                    overflow-x: hidden;
+                    min-height: 100vh;
+                }
+        
+                /* Background Slideshow */
+                .slideshow-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: -1;
+                }
+
+
+                 .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        animation: slideAnimation 24s infinite;
+        background-size: cover;
+        background-position: center;
+    }
+        
+    .slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        animation: slideAnimation 24s infinite;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .slide:nth-child(1) {
+        background-image: url('img/back4.jpg'); /* Fixed path */
+        animation-delay: 0s;
+    }
+
+    .slide:nth-child(2) {
+        background-image: url('img/back5.jpg'); /* Fixed path */
+        animation-delay: 8s;
+    }
+
+    .slide:nth-child(3) {
+        background-image: url('img/back6.jpg'); /* Fixed path */
+        animation-delay: 16s;
+    }
+
+    @keyframes slideAnimation {
+        0% { opacity: 0; }
+        2% { opacity: 1; }       /* Faster fade-in */
+        33.33% { opacity: 1; }   /* Stay visible until 8s (33.33% of 24s) */
+        35% { opacity: 0; }      /* Faster fade-out */
+        100% { opacity: 0; }
+    }
+        
+                .trending-section {
+                    padding: 10rem 4rem;
+                    position: relative;
+                    opacity: 0;
+                    animation: fadeIn 1.2s ease forwards;
+                }
+        
+                .trending-section::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: radial-gradient(circle at top right, 
+                                    rgba(46, 229, 157, 0.1),
+                                    transparent 60%),
+                                radial-gradient(circle at bottom left, 
+                                    rgba(255, 107, 107, 0.1),
+                                    transparent 60%);
+                    z-index: -1;
+                }
+        
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(40px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+        
+                .section-title {
+                    font-size: 4rem;
+                    font-weight: 800;
+                    margin-bottom: 4rem;
+                    text-align: center;
+                    background: var(--gradient-1);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    animation: float 6s ease-in-out infinite;
+                    position: relative;
+                    text-shadow: 0 10px 30px rgba(46, 229, 157, 0.2);
+                }
+        
+                .section-title::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 100px;
+                    height: 4px;
+                    background: var(--gradient-1);
+                    border-radius: 2px;
+                }
+        
+                .releases-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 3rem;
+                    padding: 2rem;
+                    max-width: 1600px;
+                    margin: 0 auto;
+                }
+        
+           
+                /* Improved Album Cover Styling */
+.album-card {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    transition: var(--transition);
+    cursor: pointer;
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.03);
+    transform-style: preserve-3d;
+    box-shadow: 
+        0 8px 32px rgba(0,0,0,0.2),
+        inset 0 0 20px rgba(255,255,255,0.05);
+}
+
+.album-cover-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 24px;
+    transform: translateZ(30px); /* 3D effect */
+}
+
+.album-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+    transform-origin: center center;
+    filter: 
+        brightness(0.95) 
+        contrast(1.05)
+        saturate(1.1);
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Hover Effects */
+.album-card:hover .album-cover {
+    transform: scale(1.08) rotateZ(0.5deg);
+    filter: 
+        brightness(1.05) 
+        contrast(1.1)
+        saturate(1.2);
+}
+
+/* Professional Overlay Effects */
+.album-cover-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0) 60%,
+        rgba(0,0,0,0.7) 100%
+    );
+    mix-blend-mode: multiply;
+    transition: var(--transition);
+}
+
+.album-card:hover .album-cover-container::after {
+    background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0) 40%,
+        rgba(0,0,0,0.8) 100%
+    );
+}
+
+/* Reflective Border Effect */
+.album-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    border: 2px solid rgba(255,255,255,0.1);
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(
+        45deg,
+        rgba(255,255,255,0.02) 0%,
+        rgba(255,255,255,0.01) 100%
+    );
+}
+
+/* Enhanced Info Panel */
+.album-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem;
+    z-index: 3;
+    transform: translateY(40%);
+    transition: var(--transition);
+}
+
+.album-title {
+    font-size: 1.8rem;
+    line-height: 1.2;
+    margin-bottom: 0.6rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.album-artist {
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+
+
+                .charts-section {
+                    padding: 10rem 4rem;
+                    background: linear-gradient(to bottom, 
+                        rgba(46, 229, 157, 0.05),
+                        rgba(255, 107, 107, 0.05));
+                    position: relative;
+                }
+        
+                .charts-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+                    gap: 3rem;
+                    padding: 2rem;
+                    max-width: 1600px;
+                    margin: 0 auto;
+                }
+        
+                .chart-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 30px;
+                    padding: 3rem;
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    transition: var(--transition);
+                    animation: slideUp 0.8s ease forwards;
+                    position: relative;
+                }
+        
+                .chart-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 40px rgba(46, 229, 157, 0.2);
+                }
+        
+                .chart-title {
+                    color: var(--primary);
+                    font-size: 2.25rem;
+                    font-weight: 700;
+                    margin-bottom: 3rem;
+                    text-align: center;
+                }
+        
+                .chart-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 1.5rem;
+                    border-radius: 16px;
+                    margin-bottom: 1.25rem;
+                    background: rgba(255,255,255,0.03);
+                    transition: var(--transition);
+                    cursor: pointer;
+                }
+        
+                .chart-item:hover {
+                    background: rgba(46, 229, 157, 0.1);
+                    transform: translateX(10px);
+                }
+        
+                .rank {
+                    font-size: 2rem;
+                    font-weight: 800;
+                    color: var(--primary);
+                    margin-right: 2rem;
+                }
+        
+                .album-rating {
+                    position: absolute;
+                    top: 1.5rem;
+                    right: 1.5rem;
+                    display: flex;
+                    gap: 4px;
+                    opacity: 0;
+                    transition: var(--transition);
+                }
+        
+                .star {
+                    color: #ffd700;
+                    font-size: 1.4rem;
+                }
+        
+                @media (max-width: 768px) {
+                    .trending-section,
+                    .charts-section {
+                        padding: 6rem 2rem;
+                    }
+        
+                    .section-title {
+                        font-size: 3rem;
+                    }
+        
+                    .releases-grid {
+                        grid-template-columns: 1fr;
+                    }
+        
+                    .charts-container {
+                        grid-template-columns: 1fr;
+                    }
+                }
+        
+                /* Animations */
+                @keyframes cardAppear {
+                    from { opacity: 0; transform: scale(0.8); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+        
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(40px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+        
+                @keyframes float {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="slideshow-container">
+                <div class="slide"></div>
+                <div class="slide"></div>
+                <div class="slide"></div>
+            </div>
+        
+            <section class="trending-section">
+                <h2 class="section-title">Trending & New Releases</h2>
+                <div class="releases-grid"></div>
+            </section>
+        
+            <section class="charts-section">
+                <h2 class="section-title">Top Charts</h2>
+                <div class="charts-container"></div>
+            </section>
+        
+            <script>
+                // Sample data
+               // Sample data with local images
+const albums = [
+    { 
+        title: "Alligator Bites Never Heal", 
+        artist: "Doechii", 
+        cover: "img/doechii.webp"  // Local image path
+    },
+    { 
+        title: "World Wide Wack", 
+        artist: "Terra", 
+        cover: "img/terra.webp"  // Local image path
+    },
+    { 
+        title: "One of Wun", 
+        artist: "Gunna", 
+        cover: "img/gunna.webp"  // Local image path
+    },
+    { 
+        title: "Cowboy Carter", 
+        artist: "Beyonce", 
+        cover: "img/gnx.webp"  // Local image path
+    },
+    { 
+        title: "Almighty So 2", 
+        artist: "Chief Keef", 
+        cover: "img/chiefkeef.webp"  // Local image path
+    },
+    { 
+        title: "Future", 
+        artist: "We Don't Trust You", 
+        cover: "img/future.webp"  // Local image path
+    },
+    { 
+        title: "Eternal Sunshine", 
+        artist: "Ariana Grande", 
+        cover: "img/ariana.webp"  // Local image path
+    },
+    { 
+        title: "Talk To The Wind", 
+        artist: "Umi", 
+        cover: "img/umi.jpg"  // Local image path
+    }
+];
+        
+                const charts = [
+                    {
+                        title: "Global Top 10",
+                        songs: [
+                            { title: "Dancing in the Rain", artist: "Skylar Moon" },
+                            { title: "Midnight Dreams", artist: "Luna West" },
+                            { title: "Electric Soul", artist: "Neon Pulse" }
+                        ]
+                    },
+                    {
+                        title: "Pop Hits",
+                        songs: [
+                            { title: "Summer Nights", artist: "Crystal Waters" },
+                            { title: "Neon Heart", artist: "Starlight" },
+                            { title: "Dance Forever", artist: "Rhythm Squad" }
+                        ]
+                    },
+                    {
+                        title: "Hip-Hop Trending",
+                        songs: [
+                            { title: "Urban Flow", artist: "City Rhythm" },
+                            { title: "Street Poetry", artist: "Metro Beats" },
+                            { title: "Night Life", artist: "Urban Knights" }
+                        ]
+                    }
+                ];
+        
+                // Render albums
+                const releasesGrid = document.querySelector('.releases-grid');
+                albums.forEach((album, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'album-card';
+                    card.style.animationDelay = `${index * 200}ms`;
+                    
+                    const rating = Math.floor(Math.random() * 3) + 3;
+                    card.innerHTML = `
+                        <img src="${album.cover}" class="album-cover" alt="${album.title}">
+                        <div class="album-info">
+                            <h3 class="album-title">${album.title}</h3>
+                            <p class="album-artist">${album.artist}</p>
+                        </div>
+                        <div class="album-rating">${'★'.repeat(rating)}</div>
+                    `;
+                    releasesGrid.appendChild(card);
+                });
+        
+                // Render charts
+                const chartsContainer = document.querySelector('.charts-container');
+                charts.forEach(chart => {
+                    const card = document.createElement('div');
+                    card.className = 'chart-card';
+                    card.innerHTML = `
+                        <h3 class="chart-title">${chart.title}</h3>
+                        ${chart.songs.map((song, i) => `
+                            <div class="chart-item">
+                                <span class="rank">${i + 1}</span>
+                                <div class="song-info">
+                                    <div class="song-title">${song.title}</div>
+                                    <div class="song-artist">${song.artist}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                    chartsContainer.appendChild(card);
+                });
+        
+                // Add hover interactions
+                document.querySelectorAll('.album-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        card.querySelector('.album-info').style.transform = 'translateY(0)';
+                        card.querySelector('.album-title').style.opacity = '1';
+                        card.querySelector('.album-artist').style.opacity = '1';
+                        card.querySelector('.album-rating').style.opacity = '1';
+                    });
+        
+                    card.addEventListener('mouseleave', () => {
+                        card.querySelector('.album-info').style.transform = 'translateY(40%)';
+                        card.querySelector('.album-title').style.opacity = '0';
+                        card.querySelector('.album-artist').style.opacity = '0';
+                        card.querySelector('.album-rating').style.opacity = '0';
+                    });
+                });
+        
+                // Intersection Observer for animations
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }
+                    });
+                }, { threshold: 0.1 });
+        
+                document.querySelectorAll('.album-card, .chart-card').forEach(el => observer.observe(el));
+            </script>
+    
+
+
+
+
+
+
+
+
+          
+<!-- User Reviews Section with Particles Background -->
+<section class="reviews-section">
+    <div id="particles-js"></div>
+    <div class="reviews-container">
+        <h2 class="section-title">What Our Users Say</h2>
+        <div class="reviews-carousel">
+            <!-- Review Cards -->
+            <div class="review-card active">
+                <div class="review-content">
+                    <div class="quote-icon">“</div>
+                    <p class="review-text">"Spotify has completely changed how I listen to my gospel music. The sound quality is incredible, and I love discovering new artists!"</p>
+                    <div class="review-author">
+                        <img src="img/nicole.jpg" alt="User 1" class="user-avatar">
+                        <div class="user-info">
+                            <h4 class="user-name">Nicole  <img src="img/zimflag.png" alt="Zambia Flag" class="flag-icon"></h4>
+                            <p class="user-role">Music Enthusiast</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-content">
+                    <div class="quote-icon">“</div>
+                    <p class="review-text">"The playlists are so well-curated, and the app is super easy to use. I can't imagine going back to any other platform!"</p>
+                    <div class="review-author">
+                        <img src="img/john.jpg" alt="User 2" class="user-avatar">
+                        <div class="user-info">
+                            <h4 class="user-name">Michael Kazembe <img src="img/zambiaflag.png" alt="Zambia Flag" class="flag-icon"></h4>
+                            <p class="user-role">Veterain Producer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-content">
+                    <div class="quote-icon">“</div>
+                    <p class="review-text">"Listening without using VPN is a lifesaver for my daily use. I can enjoy my favorite tracks without worrying about VPN usage."</p>
+                    <div class="review-author">
+                        <img src="img/ranifer.jpg" alt="User 3" class="user-avatar">
+                        <div class="user-info">
+                            <h4 class="user-name">Ranifer Vimbai <img src="img/zimflag.png" alt="Zim Flag" class="flag-icon"></h4>
+                            <p class="user-role">Music Enthusiast</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="carousel-progress">
+            <div class="progress-bar"></div>
+        </div>
+        <div class="carousel-controls">
+            <button class="carousel-prev">&larr;</button>
+            <button class="carousel-next">&rarr;</button>
+        </div>
+    </div>
+</section>
+
+
+
+
+<!-- Styles Reviews -->
+<style>
+    :root {
+        --primary: #2EE59D;
+        --primary-hover: #25C489;
+        --dark: #1a1a1a;
+        --darker: #0d0d0d;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.8);
+    }
+
+    .reviews-section {
+        padding: 8rem 2rem;
+        position: relative;
+        overflow: hidden;
+        background: var(--dark);
+    }
+
+    #particles-js {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        z-index: 0;
+        background: radial-gradient(circle at 50% 100%, var(--darker), var(--dark));
+    }
+
+    .reviews-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .section-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 4rem;
+        background: linear-gradient(to right, var(--primary), var(--primary-hover));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: fadeInUp 1s ease forwards;
+        position: relative;
+        display: inline-block;
+        padding: 0 2rem;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 4px;
+        background: linear-gradient(to right, transparent, var(--primary), transparent);
+        border-radius: 2px;
+        animation: titleUnderline 3s ease infinite;
+    }
+
+    .reviews-carousel {
+        display: flex;
+        overflow: hidden;
+        position: relative;
+        padding: 2rem 0;
+    }
+
+    .review-card {
+        min-width: 100%;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease;
+        opacity: 0;
+        display: none;
+        transform: translateX(100%);
+    }
+
+    .review-card.active {
+        opacity: 1;
+        display: block;
+        transform: translateX(0);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .review-content {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 3rem;
+        border-radius: 24px;
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 30px rgba(46, 229, 157, 0.1);
+    }
+
+    .review-content:hover {
+        box-shadow: 0 0 50px rgba(46, 229, 157, 0.3);
+        transform: scale(1.02);
+    }
+
+    .quote-icon {
+        font-size: 4rem;
+        color: var(--primary);
+        opacity: 0.2;
+        position: absolute;
+        top: -1rem;
+        left: 1rem;
+    }
+
+    .review-text {
+        font-size: 1.3rem;
+        line-height: 1.8;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .review-author {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .user-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary);
+        transition: all 0.4s ease;
+        filter: grayscale(100%);
+    }
+
+    .review-card.active .user-avatar {
+        filter: grayscale(0%);
+        box-shadow: 0 0 20px rgba(46, 229, 157, 0.3);
+    }
+
+    .user-info {
+        text-align: left;
+    }
+
+    .user-name {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-role {
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+
+    .carousel-progress {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        margin-top: 2rem;
+        position: relative;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: var(--primary);
+        width: 33.33%;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .carousel-controls {
+        margin-top: 3rem;
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+
+    .carousel-prev,
+    .carousel-next {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: var(--primary);
+        padding: 1rem;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 50px;
+        height: 50px;
+    }
+
+    .flag-icon {
+        width: 20px;
+        height: auto;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes titleUnderline {
+        0%, 100% { width: 80%; opacity: 0.8; }
+        50% { width: 100%; opacity: 1; }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .reviews-section::after {
+        content: '♪';
+        position: absolute;
+        color: rgba(255, 255, 255, 0.1);
+        font-size: 20rem;
+        top: 50%;
+        left: 10%;
+        transform: translateY(-50%);
+        z-index: -1;
+        animation: musicNoteFloat 15s linear infinite;
+    }
+
+    @keyframes musicNoteFloat {
+        0% { transform: translateY(-50%) scale(0.8); opacity: 0; }
+        50% { transform: translateY(-60%) scale(1.2); opacity: 0.3; }
+        100% { transform: translateY(-50%) scale(0.8); opacity: 0; }
+    }
+</style>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    // Carousel Functionality
+    const reviews = document.querySelectorAll('.review-card');
+    const prevButton = document.querySelector('.carousel-prev');
+    const nextButton = document.querySelector('.carousel-next');
+    const progressBar = document.querySelector('.progress-bar');
+    let currentIndex = 0;
+
+    function showReview(index) {
+        reviews.forEach((review, i) => {
+            review.classList.remove('active');
+            if (i === index) {
+                review.classList.add('active');
+            }
+        });
+        updateProgress();
+    }
+
+    function updateProgress() {
+        progressBar.style.transform = `translateX(${currentIndex * 100}%)`;
+    }
+
+    function nextReview() {
+        currentIndex = (currentIndex + 1) % reviews.length;
+        showReview(currentIndex);
+    }
+
+    function prevReview() {
+        currentIndex = (currentIndex - 1 + reviews.length) % reviews.length;
+        showReview(currentIndex);
+    }
+
+    nextButton.addEventListener('click', nextReview);
+    prevButton.addEventListener('click', prevReview);
+
+    // Auto-rotate every 5 seconds
+    setInterval(nextReview, 5000);
+
+    // Particles Initialization
+    particlesJS('particles-js', {
+        particles: {
+            number: { value: 80, density: { enable: true, value_area: 800 } },
+            color: { value: "#2EE59D" },
+            shape: { type: "circle" },
+            opacity: { value: 0.5 },
+            size: { value: 3 },
+            line_linked: {
+                enable: true,
+                distance: 150,
+                color: "#ff6b6b",
+                opacity: 0.4,
+                width: 1
+            },
+            move: { enable: true, speed: 6 }
+        },
+        interactivity: {
+            detect_on: "canvas",
+            events: {
+                onhover: { enable: true, mode: "repulse" },
+                onclick: { enable: true, mode: "push" },
+                resize: true
+            },
+            modes: {
+                repulse: { distance: 200 },
+                push: { particles_nb: 4 }
+            }
+        },
+        retina_detect: true
+    });
+
+    // Music Note Parallax
+    document.addEventListener('mousemove', (e) => {
+        const note = document.querySelector('.reviews-section::after');
+        const xPos = (e.clientX / window.innerWidth) * 20 - 10;
+        const yPos = (e.clientY / window.innerHeight) * 20 - 10;
+        note.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    });
+</script>
+
+
+
+
+
+
+<style>
+    /* Add after existing styles */
+    
+    .footer {
+        background: var(--darker);
+        padding: 4rem 3rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+            to right,
+            transparent,
+            rgba(46, 229, 157, 0.5),
+            transparent
+        );
+    }
+    
+    .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 3rem;
+        animation: fadeIn 0.8s ease forwards;
+    }
+    
+    .footer-section {
+        opacity: 0;
+        animation: slideUp 0.6s ease forwards;
+    }
+    
+    .footer-section:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .footer-section:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    .footer-section:nth-child(4) {
+        animation-delay: 0.6s;
+    }
+    
+    .footer-title {
+        color: var(--primary);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    
+    .footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .footer-links li {
+        margin-bottom: 1rem;
+    }
+    
+    .footer-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .footer-links a:hover {
+        color: var(--primary);
+        transform: translateX(5px);
+    }
+    
+    .social-links {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .social-link {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        overflow: hidden; /* This will ensure the image stays within the circular boundary */
+    }
+    
+    
+    .social-link:hover {
+        background: var(--primary);
+        transform: translateY(-5px);
+    }
+    
+    .social-icon {
+        width: 20px;
+        height: 20px;
+        object-fit: contain; /* This ensures the image maintains its aspect ratio */
+    }
+    
+    .footer-bottom {
+        text-align: center;
+        padding-top: 3rem;
+        margin-top: 3rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .footer-bottom span {
+        color: var(--primary);
+    }
+    
+    @media (max-width: 768px) {
+        .footer {
+            padding: 3rem 1.5rem 1.5rem;
+        }
+        
+        .footer-content {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .footer-section {
+            text-align: center;
+        }
+        
+        .social-links {
+            justify-content: center;
+        }
+    }
+    </style>
+    </head>
+    <body>
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">Company</h3>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="about.html">Careers</a></li>
+                        <li><a href="about.html">News</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="footer-title">Communities</h3>
+                    <ul class="footer-links">
+                        <li><a href="about.html">For Artists</a></li>
+                        <li><a href="about.html">Developers</a></li>
+                        <li><a href="about.html">Advertising</a></li>
+                        <li><a href="about.html">Content Creators</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3 class="footer-title">Useful Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://t.me/Spot_Rus">Support</a></li>
+                        <li><a href="https://spotify.en.uptodown.com/windows">Desktop Player</a></li>
+                        <li><a href="https://apps.apple.com/us/app/spotify-music-and-podcasts/id324684580">Mobile App</a></li>
+                        <li><a href="https://t.me/Spot_Rus">Contact Us</a></li>
+                    </ul>
+                </div>
+                <footer class="footer">
+                    <div class="footer-content">
+                        <!-- Previous footer sections remain unchanged -->
+                        
+                        <div class="footer-section">
+                            <h3 class="footer-title">Connect With Us</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Follow us on social media for updates and more.</p>
+                            <div class="social-links">
+                                <a href="https://t.me/Spot_Rus" target="_blank" class="social-link" title="VK">
+                                    <img src="img/vk.png" alt="VK" class="social-icon">
+                                </a>
+                                <a href="https://t.me/Spot_Rus" target="_blank" class="social-link" title="Telegram">
+                                    <img src="img/telegram.png" alt="Telegram" class="social-icon">
+                                </a>
+                                <a href="https://t.me/Spot_Rus" target="_blank" class="social-link" title="WhatsApp">
+                                    <img src="img/whatsapp.png" alt="WhatsApp" class="social-icon">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-bottom">
+                        <p>&copy; 2025 <span>SpotifyRus</span>. All rights reserved.</p>
+                    </div>
+                </footer>
+</body>
+</html>
